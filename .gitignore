@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+.venv/
+venv/
+ENV/
+env/
+
+# Sensitive Data (Student Info)
+*.csv
+*.xlsx
+*.json
+Archive_2025/
+qualitative_seteuk_output/
+observation_logs.csv
+structured_observations.json
+
+# Environment & Secrets
+.env
+.env.local
+
+# OS & IDE
+.DS_Store
+.vscode/
+.idea/
