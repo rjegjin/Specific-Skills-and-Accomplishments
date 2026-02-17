@@ -11,11 +11,19 @@ class SeteukEngine:
     def __init__(self):
         try:
             from dotenv import load_dotenv
-            # 현재 파일 위치 기준으로 .env 로드
-            env_path = os.path.join(os.path.dirname(__file__), '.env')
-            load_dotenv(env_path)
-            # 루트 디렉토리 .env도 백업으로 로드
-            load_dotenv()
+            from pathlib import Path
+            # [보안 패치] 중앙 .env 로드 로직
+            current = Path(os.getcwd())
+            env_loaded = False
+            while current != current.parent:
+                target = current / '.secrets' / '.env'
+                if target.exists():
+                    load_dotenv(target)
+                    print(f"🔐 Loaded central .env from {target}")
+                    env_loaded = True
+                    break
+                current = current.parent
+            if not env_loaded: load_dotenv()
         except:
             pass
             
