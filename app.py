@@ -9,6 +9,19 @@ from st_aggrid import AgGrid, GridOptionsBuilder
 
 import random
 
+def get_neis_bytes(text):
+    """나이스(NEIS) 기준 바이트 계산 (한글 3바이트, 나머지 1바이트)"""
+    if not text: return 0
+    count = 0
+    for char in text:
+        if ord(char) > 127:
+            count += 3
+        elif char == '\n': # 줄바꿈 처리
+            count += 2
+        else:
+            count += 1
+    return count
+
 # 지루함 방지용 메시지 풀
 WAITING_MESSAGES = [
     "🍎 선생님, AI가 문장을 정교하게 다듬는 중입니다. 잠시만 기다려 주세요!",
@@ -193,13 +206,36 @@ with tab3:
         res = st.session_state.final_results[selected_student]
         
         col1, col2 = st.columns(2)
+        
+        # 바이트 제한 설정 (나이스 기준)
+        LIMITS = {"course": 1500, "career": 2100, "autonomous": 1500, "behavior": 1500}
+        
         with col1:
-            st.text_area("1) 교과 세부능력(질적분석)", res['course'], height=300)
-            st.text_area("2) 진로활동", res['career'], height=200)
-        with col2:
-            st.text_area("3) 자율활동", res['autonomous'], height=200)
-            st.text_area("4) 행동특성/종합의견", res['behavior'], height=300)
+            # 1) 교과 세특
+            b_course = get_neis_bytes(res['course'])
+            st.markdown(f"**1) 교과 세부능력(질적분석)** `{b_course}/{LIMITS['course']} bytes`")
+            st.progress(min(b_course / LIMITS['course'], 1.0))
+            st.session_state.final_results[selected_student]['course'] = st.text_area("내용 편집", res['course'], height=300, key=f"course_{selected_student}", label_visibility="collapsed")
             
-        st.caption(f"💡 위 텍스트박스에서 내용을 직접 수정하고 '구글 시트 전송'을 누르면 수정본이 올라갑니다.")
+            # 2) 진로활동
+            b_career = get_neis_bytes(res['career'])
+            st.markdown(f"**2) 진로활동** `{b_career}/{LIMITS['career']} bytes`")
+            st.progress(min(b_career / LIMITS['career'], 1.0))
+            st.session_state.final_results[selected_student]['career'] = st.text_area("내용 편집", res['career'], height=200, key=f"career_{selected_student}", label_visibility="collapsed")
+            
+        with col2:
+            # 3) 자율활동
+            b_auto = get_neis_bytes(res['autonomous'])
+            st.markdown(f"**3) 자율활동** `{b_auto}/{LIMITS['autonomous']} bytes`")
+            st.progress(min(b_auto / LIMITS['autonomous'], 1.0))
+            st.session_state.final_results[selected_student]['autonomous'] = st.text_area("내용 편집", res['autonomous'], height=200, key=f"auto_{selected_student}", label_visibility="collapsed")
+            
+            # 4) 행동특성
+            b_behav = get_neis_bytes(res['behavior'])
+            st.markdown(f"**4) 행동특성/종합의견** `{b_behav}/{LIMITS['behavior']} bytes`")
+            st.progress(min(b_behav / LIMITS['behavior'], 1.0))
+            st.session_state.final_results[selected_student]['behavior'] = st.text_area("내용 편집", res['behavior'], height=300, key=f"behav_{selected_student}", label_visibility="collapsed")
+            
+        st.caption(f"💡 위 텍스트박스에서 내용을 직접 수정하면 즉시 반영되며, '구글 시트 전송'을 누르면 저장됩니다.")
     else:
         st.write("생성된 결과가 없습니다.")
