@@ -210,29 +210,65 @@ with tab3:
         # 바이트 제한 설정 (나이스 기준)
         LIMITS = {"course": 1500, "career": 2100, "autonomous": 1500, "behavior": 1500}
         
+        # 복사 상태 관리를 위한 세션 초기화
+        if 'copy_status' not in st.session_state:
+            st.session_state.copy_status = {}
+        
         with col1:
             # 1) 교과 세특
             b_course = get_neis_bytes(res['course'])
-            st.markdown(f"**1) 교과 세부능력(질적분석)** `{b_course}/{LIMITS['course']} bytes`")
+            c1, c2 = st.columns([4, 1])
+            with c1:
+                st.markdown(f"**1) 교과 세부능력** `{b_course}/{LIMITS['course']} bytes`")
+            with c2:
+                if st.button("📋 복사", key=f"btn_course_{selected_student}"):
+                    pyperclip.copy(res['course'])
+                    st.toast(f"[{selected_student}] 교과 세특 복사 완료!")
+                    st.session_state.copy_status[f"{selected_student}_course"] = True
+            
             st.progress(min(b_course / LIMITS['course'], 1.0))
             st.session_state.final_results[selected_student]['course'] = st.text_area("내용 편집", res['course'], height=300, key=f"course_{selected_student}", label_visibility="collapsed")
             
             # 2) 진로활동
             b_career = get_neis_bytes(res['career'])
-            st.markdown(f"**2) 진로활동** `{b_career}/{LIMITS['career']} bytes`")
+            c1, c2 = st.columns([4, 1])
+            with c1:
+                st.markdown(f"**2) 진로활동** `{b_career}/{LIMITS['career']} bytes`")
+            with c2:
+                if st.button("📋 복사", key=f"btn_career_{selected_student}"):
+                    pyperclip.copy(res['career'])
+                    st.toast(f"[{selected_student}] 진로활동 복사 완료!")
+                    st.session_state.copy_status[f"{selected_student}_career"] = True
+
             st.progress(min(b_career / LIMITS['career'], 1.0))
             st.session_state.final_results[selected_student]['career'] = st.text_area("내용 편집", res['career'], height=200, key=f"career_{selected_student}", label_visibility="collapsed")
             
         with col2:
             # 3) 자율활동
             b_auto = get_neis_bytes(res['autonomous'])
-            st.markdown(f"**3) 자율활동** `{b_auto}/{LIMITS['autonomous']} bytes`")
-            st.progress(min(b_auto / LIMITS['autonomous'], 1.0))
+            c1, c2 = st.columns([4, 1])
+            with c1:
+                st.markdown(f"**3) 자율활동** `{b_auto}/{LIMITS['autonomous']} bytes`")
+            with c2:
+                if st.button("📋 복사", key=f"btn_auto_{selected_student}"):
+                    pyperclip.copy(res['autonomous'])
+                    st.toast(f"[{selected_student}] 자율활동 복사 완료!")
+                    st.session_state.copy_status[f"{selected_student}_auto"] = True
+
+            st.progress(min(b_auto / LIMITS['auto_label' if 'auto_label' in locals() else 'autonomous'], 1.0))
             st.session_state.final_results[selected_student]['autonomous'] = st.text_area("내용 편집", res['autonomous'], height=200, key=f"auto_{selected_student}", label_visibility="collapsed")
             
             # 4) 행동특성
             b_behav = get_neis_bytes(res['behavior'])
-            st.markdown(f"**4) 행동특성/종합의견** `{b_behav}/{LIMITS['behavior']} bytes`")
+            c1, c2 = st.columns([4, 1])
+            with c1:
+                st.markdown(f"**4) 행동특성/종합** `{b_behav}/{LIMITS['behavior']} bytes`")
+            with c2:
+                if st.button("📋 복사", key=f"btn_behav_{selected_student}"):
+                    pyperclip.copy(res['behavior'])
+                    st.toast(f"[{selected_student}] 행종 복사 완료!")
+                    st.session_state.copy_status[f"{selected_student}_behav"] = True
+
             st.progress(min(b_behav / LIMITS['behavior'], 1.0))
             st.session_state.final_results[selected_student]['behavior'] = st.text_area("내용 편집", res['behavior'], height=300, key=f"behav_{selected_student}", label_visibility="collapsed")
             
