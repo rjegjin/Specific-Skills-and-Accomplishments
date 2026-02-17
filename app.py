@@ -28,8 +28,12 @@ with st.sidebar:
                 home_engine = HomeroomEngine()
                 
                 # 1. 교과 데이터 전처리
-                st.write("📂 교과 데이터 전처리 중...")
-                course_engine.preprocess()
+                try:
+                    st.write("📂 교과 데이터 전처리 중...")
+                    course_engine.preprocess()
+                except Exception as e:
+                    st.error(f"전처리 중 오류 발생: {e}")
+                    st.stop()
                 
                 # 2. 교과 세특 생성
                 st.write("🧬 교과 세특 AI 생성 중...")

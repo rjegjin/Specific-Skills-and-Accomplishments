@@ -39,7 +39,12 @@ class SeteukEngine:
 
     def preprocess(self):
         """질적 연구 기반 교과 데이터 전처리"""
-        if not os.path.exists(INPUT_CSV): return 0
+        if not os.path.exists(INPUT_CSV):
+            raise FileNotFoundError(f"입력 CSV 파일을 찾을 수 없습니다: {INPUT_CSV}")
+            
+        # 출력 디렉토리 생성 보장
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        
         df = pd.read_csv(INPUT_CSV, encoding='utf-8-sig')
         df = df.sort_values(by=['이름', '날짜'])
         structured = {name: group.to_dict('records') for name, group in df.groupby('이름')}
