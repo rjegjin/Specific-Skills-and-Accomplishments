@@ -7,6 +7,19 @@ from homeroom_engine import HomeroomEngine
 from seteuk_config import INPUT_CSV, SPREADSHEET_ID
 from st_aggrid import AgGrid, GridOptionsBuilder
 
+import random
+
+# 지루함 방지용 메시지 풀
+WAITING_MESSAGES = [
+    "🍎 선생님, AI가 문장을 정교하게 다듬는 중입니다. 잠시만 기다려 주세요!",
+    "💡 생기부 기재 팁: 구체적인 행동과 변화 과정을 중심으로 적으면 더 좋은 생기부가 됩니다.",
+    "📚 나이스(NEIS) 입력 시 영문/숫자는 1바이트, 한글은 3바이트로 계산되니 주의하세요!",
+    "📝 AI는 현재 선생님의 관찰 팩트를 기반으로 성장 중심 서사를 구성하고 있습니다.",
+    "☕️ 잠시 차 한 잔 어떠신가요? 곧 작업이 완료됩니다.",
+    "✨ 주어 없이 '~하였음'으로 끝나는 문체는 생기부의 기본입니다.",
+    "🔍 생성된 문장에 대학교 이름이나 부모님 직업이 포함되지 않도록 한 번 더 확인해 주세요!"
+]
+
 # 페이지 설정
 st.set_page_config(page_title="질적 연구 기반 세특 생성기", layout="wide", page_icon="📝")
 
@@ -38,9 +51,10 @@ with st.sidebar:
                 # 2. 교과 세특 생성
                 st.write("🧬 교과 세특 AI 생성 중...")
                 progress_bar = st.progress(0)
+                status_text = st.empty()
                 course_results = {}
                 for prog, name, current_results in course_engine.generate_course_seteuk():
-                    st.write(f"  - [{name}] 학생 교과 세특 생성 완료")
+                    status_text.info(f"✨ [{name}] 학생 생성 중... \n\n {random.choice(WAITING_MESSAGES)}")
                     progress_bar.progress(prog)
                     course_results = current_results
                 
@@ -51,9 +65,10 @@ with st.sidebar:
                 # 4. 담임 영역 생성
                 st.write("🏠 진로/자율/행종 AI 생성 중...")
                 progress_bar_home = st.progress(0)
+                status_text_home = st.empty()
                 home_results = {}
                 for prog, name, current_results in home_engine.generate_homeroom_sections(home_data):
-                    st.write(f"  - [{name}] 학생 담임 영역 생성 완료")
+                    status_text_home.info(f"🏠 [{name}] 학생 생성 중... \n\n {random.choice(WAITING_MESSAGES)}")
                     progress_bar_home.progress(prog)
                     home_results = current_results
                 

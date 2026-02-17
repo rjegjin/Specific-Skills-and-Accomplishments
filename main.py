@@ -11,13 +11,18 @@ def main():
     course_results = {}
     if course_count > 0:
         print(f"   - {course_count}명의 교과 관찰 기록 분석 및 AI 생성 중...")
-        course_results = course_engine.generate_course_seteuk()
+        # 제너레이터를 리스트/딕셔너리로 변환하여 마지막 결과 획득
+        for prog, name, current_results in course_engine.generate_course_seteuk():
+            course_results = current_results
     
     # 2. 담임 영역 처리 (시트 데이터 기반)
     print("\n🚀 2단계: 담임 영역(진로/자율/행종) 시트 데이터 취합 중...")
     home_data = home_engine.collect_all_data()
     print(f"   - {len(home_data)}명의 담임 영역 데이터 분석 및 AI 생성 중...")
-    home_results = home_engine.generate_homeroom_sections(home_data)
+    # 제너레이터를 리스트/딕셔너리로 변환하여 마지막 결과 획득
+    home_results = {}
+    for prog, name, current_results in home_engine.generate_homeroom_sections(home_data):
+        home_results = current_results
     
     # 3. 데이터 통합 (이름 기준 매칭)
     print("\n🚀 3단계: 모든 영역 데이터 통합 중...")

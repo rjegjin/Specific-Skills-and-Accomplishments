@@ -8,13 +8,13 @@ ENV/
 env/
 
 # Sensitive Data (Student Info)
-*.csv
+# *.csv - allow for streamlit cloud demo (be careful with real data)
+!observation_logs.csv
 *.xlsx
-*.json
+# *.json - allow structured data
+!structured_observations.json
 Archive_2025/
 qualitative_seteuk_output/
-observation_logs.csv
-structured_observations.json
 
 # Environment & Secrets
 .env
