@@ -12,6 +12,10 @@ class HomeroomEngine:
     def __init__(self):
         try:
             from dotenv import load_dotenv
+            # 현재 파일 위치 기준으로 .env 로드
+            env_path = os.path.join(os.path.dirname(__file__), '.env')
+            load_dotenv(env_path)
+            # 루트 디렉토리 .env도 백업으로 로드
             load_dotenv()
         except:
             pass

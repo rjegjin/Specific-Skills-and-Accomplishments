@@ -18,7 +18,8 @@ except:
 SPREADSHEET_ID = "1mqlzFYHm2ipo3MYvNCeo6zsNT7-bJ7tEGIsXqYRV7DI"
 
 # [경로 설정]
-BASE_DIR = "세특"
+# 실행 위치에 관계없이 '세특' 폴더 내의 파일을 가리키도록 설정
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INPUT_CSV = os.path.join(BASE_DIR, "observation_logs.csv")
 STRUCTURED_JSON = os.path.join(BASE_DIR, "structured_observations.json")
 OUTPUT_DIR = os.path.join(BASE_DIR, "qualitative_seteuk_output")
