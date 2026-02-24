@@ -4,8 +4,11 @@ import json
 import os
 from seteuk_core import SeteukEngine
 from homeroom_engine import HomeroomEngine
-from seteuk_config import INPUT_CSV, SPREADSHEET_ID
+from seteuk_config import INPUT_CSV, SPREADSHEET_ID, SERVICE_ACCOUNT_FILE
+from keywords_config import KEYWORD_LIBRARY
 from st_aggrid import AgGrid, GridOptionsBuilder
+import gspread
+from google.oauth2.service_account import Credentials
 
 import random
 
@@ -116,7 +119,113 @@ with st.sidebar:
 `{SPREADSHEET_ID}`""")
 
 # 메인 화면 탭 구성
-tab1, tab2, tab3 = st.tabs(["📊 데이터 대시보드", "📋 관찰 로그(CSV) 편집", "🔍 AI 생성 결과 프리뷰"])
+tab0, tab1, tab2, tab3 = st.tabs(["⚡ 실시간 퀵 로그", "📊 데이터 대시보드", "📋 관찰 로그(CSV) 편집", "🔍 AI 생성 결과 프리뷰"])
+
+with tab0:
+    st.subheader("⚡ 실시간 키워드 중심 관찰 기록")
+    st.markdown("수업 중이나 활동 직후, 학생의 핵심 행동을 키워드 중심으로 즉시 기록합니다.")
+
+    # 구글 시트 연결 (기록용)
+    @st.cache_resource
+    def get_gspread_client():
+        scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=scopes)
+        return gspread.authorize(creds)
+
+    client = get_gspread_client()
+    sh = client.open_by_key(SPREADSHEET_ID)
+    
+    # 학생 명단 로드 (캐싱)
+    @st.cache_data(ttl=600)
+    def get_student_names():
+        try:
+            ws = sh.worksheet("생기부data")
+            names = ws.col_values(2)[2:] # 3행부터 성명
+            return [n.strip() for n in names if n.strip()]
+        except:
+            return []
+
+    student_names = get_student_names()
+
+    col_s1, col_s2 = st.columns([1, 2])
+    with col_s1:
+        selected_name = st.selectbox("👤 학생 선택", ["선택하세요"] + student_names, index=0)
+    
+    if selected_name != "선택하세요":
+        st.divider()
+        
+        # 3단계 드롭다운 UI
+        col_d1, col_d2, col_d3 = st.columns(3)
+        
+        with col_d1:
+            domain_options = list(KEYWORD_LIBRARY.keys())
+            selected_domain = st.selectbox("1️⃣ 영역 선택", domain_options)
+        
+        with col_d2:
+            category_options = list(KEYWORD_LIBRARY[selected_domain].keys())
+            selected_category = st.selectbox("2️⃣ 대분류 선택", category_options)
+            
+        with col_d3:
+            sub_category_options = list(KEYWORD_LIBRARY[selected_domain][selected_category].keys())
+            selected_sub_category = st.selectbox("3️⃣ 중분류 선택", sub_category_options)
+
+        # 최종 키워드 다중 선택
+        keyword_pool = KEYWORD_LIBRARY[selected_domain][selected_category][selected_sub_category]
+        selected_keywords = st.multiselect("🏷️ 핵심 키워드 선택 (복수 선택 가능)", keyword_pool)
+        
+        # 추가 상황 기술
+        context_input = st.text_area("📝 추가 상황 기술 (구체적 에피소드)", 
+                                    placeholder="키워드 외에 구체적인 행동이나 상황이 있다면 적어주세요. AI가 문맥을 만드는 데 큰 도움이 됩니다.",
+                                    help="예: '실험 도중 전압계 연결이 잘못된 것을 발견하고 조원들에게 원인을 설명함.'")
+
+        if st.button("🚀 실시간 기록 및 저장", type="primary", use_container_width=True):
+            if not selected_keywords and not context_input:
+                st.warning("키워드를 선택하거나 내용을 입력해 주세요.")
+            else:
+                with st.spinner(f"{selected_name} 학생 기록 중..."):
+                    try:
+                        # 1. 조합된 텍스트 생성
+                        combined_fact = ", ".join(selected_keywords)
+                        full_entry = f"[{pd.Timestamp.now().strftime('%m/%d')}] {combined_fact}"
+                        if context_input:
+                            full_entry += f" - {context_input}"
+
+                        # 2. 구글 시트 저장 (생기부data 시트)
+                        ws = sh.worksheet("생기부data")
+                        all_names = ws.col_values(2)
+                        try:
+                            row_idx = all_names.index(selected_name) + 1
+                            
+                            # 영역에 따른 컬럼 결정 (과학: 36열(career_raw 대용 혹은 별도), 담임: 42열 등)
+                            # 여기서는 기존 엔진이 사용하는 'career_raw'(36열)와 'behavior_raw'(42열)를 활용
+                            col_idx = 36 if "과학" in selected_domain else 42
+                            
+                            current_val = ws.cell(row_idx, col_idx).value or ""
+                            new_val = (current_val + "\n" + full_entry).strip()
+                            ws.update_cell(row_idx, col_idx, new_val)
+                            
+                            # 3. 교과일 경우 CSV에도 추가 (선택사항)
+                            if "과학" in selected_domain and os.path.exists(INPUT_CSV):
+                                df_logs = pd.read_csv(INPUT_CSV, encoding='utf-8-sig')
+                                new_row = {
+                                    "날짜": pd.Timestamp.now().strftime('%Y-%m-%d'),
+                                    "이름": selected_name,
+                                    "대분류(상황)": selected_category,
+                                    "소분류(활동)": selected_sub_category,
+                                    "구체적 행동(Fact)": context_input if context_input else combined_fact,
+                                    "핵심 키워드": combined_fact,
+                                    "영향/반응": "긍정적 변화",
+                                    "교사 메모": ""
+                                }
+                                df_logs = pd.concat([df_logs, pd.DataFrame([new_row])], ignore_index=True)
+                                df_logs.to_csv(INPUT_CSV, index=False, encoding='utf-8-sig')
+
+                            st.success(f"✅ {selected_name} 학생의 기록이 성공적으로 업데이트되었습니다!")
+                            st.toast(f"{selected_name} 기록 완료")
+                        except ValueError:
+                            st.error(f"시트에서 '{selected_name}' 학생을 찾을 수 없습니다.")
+                    except Exception as e:
+                        st.error(f"저장 중 오류 발생: {e}")
 
 with tab1:
     st.subheader("📌 작업 현황")
