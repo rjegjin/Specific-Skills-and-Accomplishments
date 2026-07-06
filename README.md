@@ -9,25 +9,57 @@
   - **교과 영역:** 탐구 역량 및 교과 성취 중심 분석.
   - **담임 영역:** 진로, 자율활동, 행동특성 중심의 종합적 성장 기록.
 - **엄격한 규정 준수:** '~하였음.' 종결 어미 강제, 이름/호칭 배제, 생기부 금지어 필터링 등 교육부 지침 최적화.
-- **Streamlit 기반 GUI:** 복잡한 터미널 명령 없이 웹 브라우저에서 데이터 편집, AI 프리뷰, 결과물 전송 가능.
+- **Streamlit 웹 GUI:** 복잡한 터미널 명령 없이 웹 브라우저에서 데이터 편집, AI 프리뷰, 결과물 전송 가능. 3단계 키워드 드롭다운, 진행률 표시, 나이스(NEIS) 바이트 카운터 포함.
+- **CLI 기반 NEIS 자동 입력:** `neis_helper.py` — 구글 시트 데이터를 NEIS 웹사이트에 자동으로 붙여넣기 (F9: 붙여넣기+다음학생, F8: 미리보기, F10: 새로고침).
 - **데이터 어그리게이터:** 여러 개의 구글 시트에 흩어진 관찰 데이터를 학생 이름을 기반으로 자동 통합 취합.
+- **공용 인증 모듈:** 통합 가상환경 `sheets_client` 사용으로 중앙식 구글 시트 API 관리.
 
 ## 🛠 기술 스택
 - **Language:** Python 3.12
-- **AI 모델:** Google Gemini 1.5 Pro / Flash
-- **Interface:** Streamlit (Web GUI)
-- **Data:** Pandas (Data Processing), Google Sheets API (gspread)
+- **AI 모델:** Google Gemini 1.5 Pro / Flash (google-genai)
+- **Interface:** 
+  - Streamlit (Web GUI with st-aggrid)
+  - CLI with keyboard shortcuts (neis_helper.py)
+- **Data:** 
+  - Pandas (데이터 처리)
+  - Google Sheets API (gspread)
+  - sheets_client (공용 인증 모듈, mh-common)
+- **Utilities:** pyperclip (클립보드 조작), keyboard (단축키 감지)
 
 ## 🚀 사용 방법
-1. **환경 설정:** `seteuk_config.py`에서 구글 시트 URL 및 API 키 설정.
-2. **실행:**
-   ```bash
-   streamlit run app.py
-   ```
-3. **작업 흐름:**
-   - 웹 UI에서 대상 학급 및 학생 선택.
-   - AI가 생성한 초안 확인 및 수정.
-   - 최종 결과물을 엑셀 또는 구글 시트로 내보내기.
+
+### 1️⃣ 세특 생성 (Streamlit 웹 GUI)
+```bash
+# 통합 가상환경 사용
+/home/rjegj/projects/unified_venv/bin/python -m streamlit run app.py
+```
+**작업 흐름:**
+- 웹 UI에서 "전체 시스템 가동" 클릭
+- AI가 교과 세특 + 담임 영역(진로/자율/행종) 자동 생성
+- 생성된 결과물 미리보기 및 수정
+- 구글 시트 또는 엑셀로 내보내기
+
+### 2️⃣ NEIS 자동 입력 (CLI)
+```bash
+# 첫 실행 시: 대화형 설정 마법사
+/home/rjegj/projects/unified_venv/bin/python neis_helper.py --setup
+
+# 이후 실행: 저장된 설정 자동 로드
+/home/rjegj/projects/unified_venv/bin/python neis_helper.py
+```
+**단축키:**
+- `F9` — 클립보드 데이터를 NEIS에 붙여넣기 + 다음 학생 이동
+- `F8` — 클립보드 복사만 (미리보기용)
+- `F7` — 클립보드의 이름으로 학생 검색
+- `F10` — 시트 데이터 새로고침
+- `Ctrl+Home` — 첫 학생으로 이동
+- `ESC` — 종료
+
+### 3️⃣ 터미널 모드 (배치 생성)
+```bash
+/home/rjegj/projects/unified_venv/bin/python main.py
+```
+교과 및 담임 영역 세특을 일괄 생성하여 구글 시트에 업로드합니다.
 
 ## ⚠️ 주의 사항
 - 본 레포지토리는 소스 코드 및 설정 템플릿만 포함하고 있습니다.
